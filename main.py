@@ -3,7 +3,7 @@ import json
 import random
 
 # ==============================================================================
-# 🎨 CẤU HÌNH GIAO DIỆN & TÊN BIẾN
+# 🎨 CẤU HÌNH GIAO DIỆN & MÀU SẮC
 # ==============================================================================
 st.set_page_config(page_title="AI BACCARAT VIP", page_icon="🎰", layout="centered")
 st.markdown("""
@@ -16,14 +16,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 🧠 LOGIC AI VVIP (FUZZY & BẺ CẦU)
+# 🧠 LOGIC AI VVIP (FUZZY & BẺ CẦU - Logic cuối cùng)
 # ==============================================================================
 PATTERN_LENGTH = 5
 
-# Khởi tạo bộ nhớ (Chỉ chạy 1 lần khi session_state trống)
+# Khởi tạo bộ nhớ và chạy giả lập 2000 ván (chỉ chạy 1 lần)
 if 'h' not in st.session_state: 
     st.session_state.h = []
-    # Khởi tạo dữ liệu học tập và chạy giả lập 2000 ván
     st.session_state.d = {}
     pop = ['B']*46 + ['P']*45 + ['T']*9
     sim = "".join(random.choices(pop, k=2000))
@@ -71,25 +70,29 @@ def predict_ai():
             if pb >= 0.55: best_pred="BANKER"; conf=int(pb*100); method="Mẫu Tương Tự"
             elif pb <= 0.45: best_pred="PLAYER"; conf=int((1-pb)*100); method="Mẫu Tương Tự"
 
-    # 3. LUẬT CẦU CƠ BẢN (Fallback)
+    # 3. LUẬT CẦU CƠ BẢN (Fallback) - Sửa lỗi màu xanh
     if not best_pred:
         if s.endswith("BB"): best_pred="BANKER"; method="Theo Bệt"; conf=60
         elif s.endswith("PP"): best_pred="PLAYER"; method="Theo Bệt"; conf=60
-        else: best_pred=clean[-1]; method="Theo Đuôi"; conf=50
+        elif clean[-1] == 'B': best_pred="BANKER"; method="Theo Đuôi"; conf=50
+        else: best_pred="PLAYER"; method="Theo Đuôi"; conf=50
 
-    icon = "🔴" if best_pred == "BANKER" else "🔵"
+    if best_pred == "BANKER": icon = "🔴"
+    elif best_pred == "PLAYER": icon = "🔵"
+    else: icon = "⚪"
+    
     return best_pred, icon, method, conf
 
 # ==============================================================================
-# 🖥️ GIAO DIỆN & INPUT
+# 🖥️ GIAO DIỆN & INPUT (Đã fix lỗi màu)
 # ==============================================================================
 st.title("🎰 AI BACCARAT MOBILE")
-p, i, r, c = predict_ai()
+p, i, r, c = predict_ai() 
 
 if p!="WAIT":
-    color = "red" if p=="BANKER" else "blue"
+    color = "red" if p=="BANKER" else "blue" # Fix màu: chỉ cần check chữ đầy đủ
     st.markdown(f'<div class="box"><h3>AI CHỐT KÈO</h3><div class="big {color}">{p} {i}</div><div>📊 Tỉ lệ: {c}%</div><div>💡 {r}</div></div>', unsafe_allow_html=True)
-else: st.info(f"👋 {r}") # Hiện "Đang chờ đủ 5 tay..."
+else: st.info(f"👋 {r}")
 
 # NÚT BẤM VÀ CẬP NHẬT LỊCH SỬ
 def learn_new_result(winner):
