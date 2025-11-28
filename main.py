@@ -3,7 +3,7 @@ import json
 import random
 
 # ==============================================================================
-# 🎨 CẤU HÌNH VÀ GIAO DIỆN
+# 🎨 CẤU HÌNH GIAO DIỆN & TÊN BIẾN
 # ==============================================================================
 st.set_page_config(page_title="AI BACCARAT VIP", page_icon="🎰", layout="centered")
 st.markdown("""
@@ -20,11 +20,11 @@ st.markdown("""
 # ==============================================================================
 PATTERN_LENGTH = 5
 
-# Khởi tạo bộ nhớ (Chỉ chạy 1 lần)
-if 'h' not in st.session_state: st.session_state.h = []
-if 'd' not in st.session_state:
+# Khởi tạo bộ nhớ (Chỉ chạy 1 lần khi session_state trống)
+if 'h' not in st.session_state: 
+    st.session_state.h = []
+    # Khởi tạo dữ liệu học tập và chạy giả lập 2000 ván
     st.session_state.d = {}
-    # Giả lập 2000 ván để học mẫu cầu ngay từ đầu
     pop = ['B']*46 + ['P']*45 + ['T']*9
     sim = "".join(random.choices(pop, k=2000))
     cl = [x for x in sim if x != 'T']
@@ -32,6 +32,7 @@ if 'd' not in st.session_state:
         p="".join(cl[i:i+PATTERN_LENGTH]); o=cl[i+PATTERN_LENGTH]
         if p not in st.session_state.d: st.session_state.d[p]={'B':0,'P':0}
         st.session_state.d[p][o]+=1
+
 
 def calculate_hamming_distance(s1, s2):
     if len(s1) != len(s2): return float('inf')
@@ -45,7 +46,7 @@ def predict_ai():
     if s.endswith("BBBBBB"): return "PLAYER", "🔵", "Bẻ Bệt Đỏ (6)", 85
     if s.endswith("PPPPPP"): return "BANKER", "🔴", "Bẻ Bệt Xanh (6)", 85
     
-    if len(clean) < PATTERN_LENGTH: return "WAIT", "", "Đang chờ cầu...", 0
+    if len(clean) < PATTERN_LENGTH: return "WAIT", "", "Đang chờ đủ 5 tay...", 0
     current_pattern = "".join(clean[-PATTERN_LENGTH:])
     
     learned = st.session_state.d
@@ -80,15 +81,15 @@ def predict_ai():
     return best_pred, icon, method, conf
 
 # ==============================================================================
-# 🖥️ GIAO DIỆN
+# 🖥️ GIAO DIỆN & INPUT
 # ==============================================================================
 st.title("🎰 AI BACCARAT MOBILE")
-p, i, r, c = predict_ai() # Gọi hàm AI VVIP
+p, i, r, c = predict_ai()
 
 if p!="WAIT":
     color = "red" if p=="BANKER" else "blue"
     st.markdown(f'<div class="box"><h3>AI CHỐT KÈO</h3><div class="big {color}">{p} {i}</div><div>📊 Tỉ lệ: {c}%</div><div>💡 {r}</div></div>', unsafe_allow_html=True)
-else: st.info("Nhập cầu để AI chạy...")
+else: st.info(f"👋 {r}") # Hiện "Đang chờ đủ 5 tay..."
 
 # NÚT BẤM VÀ CẬP NHẬT LỊCH SỬ
 def learn_new_result(winner):
@@ -109,4 +110,4 @@ if c2.button("🔵 PLAYER", use_container_width=True): learn_new_result('P')
 if c3.button("🟢 TIE", use_container_width=True): learn_new_result('T')
 
 st.text_area("Lịch sử:", value=" ".join(st.session_state.h[-10:]), disabled=True)
-if st.button("🔄 Xóa Cầu"): st.session_state.h=[]; st.rerun()
+if st.button("🔄 Xóa Cầu / Reset Game"): st.session_state.h=[]; st.rerun()
